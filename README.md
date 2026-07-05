@@ -1,41 +1,51 @@
 # Concrete Strength Prediction
 
-A gradient boosting model for predicting the compressive strength of concrete mixes 
-that incorporate **FSA (Fly-ash/Slag Aggregate)** and **Jute Fibre** as reinforcing 
-materials, using ordered boosting and symmetric decision trees (CatBoost-style).
+A CatBoost regression model that predicts concrete compressive strength from two 
+additive materials — **FSA (Foundry Sand Ash)** and **JF (Jute Fiber)** — tested 
+across synthetic datasets of increasing size (15 → 1,000 → 100,000 samples).
+
+## Synthetic data notice
+
+This project currently trains on **synthetic, randomly generated data**, not real 
+laboratory measurements. The target variable (compressive strength) is generated 
+from a formula the notebook defines itself (e.g. `0.5*FSA + 3*JF + noise`, with an 
+added interaction/quadratic term in the largest experiment).
+This is useful for prototyping the modeling pipeline 
+and visualizing how CatBoost fits a known relationship, but **results here do not 
+reflect real-world concrete performance** until the model is retrained on genuine 
+experimental data ( which was not available at the time of the experiment).
 
 ## Overview
 
-Concrete compressive strength is a highly nonlinear function of its ingredients and 
-curing conditions. This project trains a gradient boosting regressor to predict 
-strength from mix composition, and benchmarks it against more conventional approaches.
+Concrete compressive strength depends nonlinearly on its ingredients. This notebook 
+explores using **CatBoost**, a gradient boosting library with native handling of 
+ordered boosting and symmetric trees, to model strength as a function of two 
+additive materials:
 
-The model outperforms:
-- Random Forest
-- Support Vector Regression (SVR)
-- Traditional Gradient Boosted Decision Trees (GBDT)
+- **FSA** — Foundry Sand Ash content (%)
+- **JF** — Jute Fiber content (%)
 
-Performance gains come primarily from native categorical feature encoding (avoiding 
-one-hot/label-encoding artifacts) and tuned L2 regularization.
+Three experiments are run at increasing scale to see how the model behaves as 
+dataset size grows.
 
 ## Contents
 
-- `CSP.ipynb` — main notebook: data loading, preprocessing, model training, 
-  evaluation, and comparison against baseline models
+- `CSP.ipynb` — notebook containing all three experiments (data generation, model 
+  training, evaluation, and visualization)
 
-## Approach
+## Experiments
 
-1. **Data preparation** — cleaning and structuring the concrete mix dataset (inputs 
-   such as cement, water, aggregate, FSA, and Jute Fibre content; target = compressive 
-   strength)
-2. **Baseline models** — Random Forest, SVR, and standard GBDT trained for comparison
-3. **Gradient boosting model** — trained using ordered boosting and symmetric trees, 
-   with native categorical feature handling
-4. **Regularization tuning** — L2 penalty tuned to reduce overfitting and improve 
-   generalization
-5. **Evaluation** — models compared on held-out test performance (e.g. RMSE / R²)
+| # | Samples | Relationship modeled | CatBoost config | MAE |
+|---|---------|----------------------|------------------|-----|
+| 1 | 15 | Linear: `0.5·FSA + 3·JF + noise` | `iterations=1000, lr=0.1, depth=4` | **0.604** |
+| 2 | 1,000 | Linear: `0.5·FSA + 3·JF + noise` | `iterations=1000, lr=0.05, depth=5` | **0.855** |
+| 3 | 100,000 | Nonlinear: adds `FSA·JF` interaction and `FSA²` term | `iterations=500, lr=0.05, depth=6` | **0.805** |
 
-## Getting Started
+Each experiment reports **Mean Absolute Error (MAE)** on a held-out test split, and 
+produces three plots:
+- Actual vs. predicted scatter plot
+- 3D surface plot of predicted strength over the FSA/JF input space
+- 2D contour plot of the same surface
 
 ### Requirements
 
@@ -45,21 +55,11 @@ pip install catboost scikit-learn pandas numpy matplotlib
 
 ### Run
 
-Open `CSP.ipynb` in Jupyter or Google Colab and run all cells sequentially.
+Open `CSP.ipynb` in Jupyter or Google Colab and run all cells sequentially. Each 
+experiment (small, medium, large) is self-contained within its own code cell.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Projit1101/Concrete-Strength-Prediction/blob/main/CSP.ipynb)
 
-## Results
 
-_Add your final metrics table here, e.g.:_
 
-| Model             | RMSE | R²   |
-|-------------------|------|------|
-| SVR               |      |      |
-| Random Forest     |      |      |
-| Traditional GBDT  |      |      |
-| **This model**    |      |      |
 
-## License
-
-MIT
